@@ -13,7 +13,7 @@ def create_ilutzim_excel(makel_names, manager_names, samba_names):
     """
     Create the ilutzim excel file as a 'Multiply indexed DataFrame'
     source:https://jakevdp.github.io/PythonDataScienceHandbook/03.05-
-    hierarchical-indexing.html
+    hierarchical-indexing.html for each population
     :param makel_names: list that contains the names of every 'makel'
     :param manager_names: list that contains the names of every 'manaager'
     :param samba_names: list that contains the names of every 'samab'
@@ -47,4 +47,3 @@ def create_ilutzim_excel(makel_names, manager_names, samba_names):
 
     # Close the Pandas Excel writer and output the Excel file.
     writer.save()
-
