@@ -1,21 +1,54 @@
 # Create the gui for the app
 import tkinter as tk
+import pandas as pd
 
-# Create a window and define it's size
+def get_ilutzim_location():
+    """
+    Get the ilutzim file location
+    :return: the ilutzim file location as a string
+    """
+    files_location_df = pd.read_csv('files_location.csv')
+    ilutzim_file = files_location_df['ilutzim'][0]
+    return ilutzim_file
+
+def get_justice_board_location():
+    """
+    Get the justice board file location
+    :return: the justice board file location as a string
+    """
+    files_location_df = pd.read_csv('files_location.csv')
+    justice_board_file = files_location_df['justice_board'][0]
+    return justice_board_file
+
+def save_files_new_locations(files_location_df, ilutzim_entry, justice_entry):
+    """
+    Saves the new files location of ilutzim and justice board
+    :param files_location_df: the df which contain the files locations
+    :param ilutzim_entry: The new ilutzim file location given by the user
+     through the entry
+    :param justice_entry: The new justice board location given by the user
+     through the entry
+    """
+    files_location_df.at[0, 'ilutzim'] = ilutzim_entry.get()
+    files_location_df.at[0, 'justice_board'] = justice_entry.get()
+    files_location_df.to_csv('files_location.csv', index=False)
+
+
+# Create a main window and define it's size
 window = tk.Tk()
 window.geometry("700x600")
 window.title('משבץ צוות כונן אוטומטי')
 
-
 def openEditPeopleWindow():
     """
-    This function create a new window
+    Create a new window for editing people
     """
     # Create a new windows and set size and title
     edit_people_window = tk.Toplevel(window)
     edit_people_window.title("משבץ צוות אוטומטי")
     edit_people_window.geometry("400x300")
 
+    # Divide the windows into 7x7 frames
     for i in range(7):
         edit_people_window.columnconfigure(i, weight=1, minsize=20)
         edit_people_window.rowconfigure(i, weight=1, minsize=20)
@@ -64,13 +97,15 @@ def openEditPeopleWindow():
 
 def openChangeFileLocWindows():
     """
-    This function opens a window of change file location
+    Create a new window for changing ilutzim and justice board files locations'
     """
+
     # Create a new windows and set size and title
     change_file_loc_windows = tk.Toplevel(window)
     change_file_loc_windows.title("משבץ צוות אוטומטי")
     change_file_loc_windows.geometry("400x300")
 
+    # Divide the windows into 5x5 frames
     for i in range(5):
         change_file_loc_windows.columnconfigure(i, weight=1, minsize=20)
         change_file_loc_windows.rowconfigure(i, weight=1, minsize=20)
@@ -93,21 +128,21 @@ def openChangeFileLocWindows():
     ilutzim_headline.config(font=("calibri", 12))
 
     # Get the location of the justice board file
-    justice_board_file_loc = tk.Entry(change_file_loc_windows).grid(row=1, column=1, sticky="ew")
+    justice_board_file_loc = tk.Entry(change_file_loc_windows)
+    justice_board_file_loc.grid(row=1, column=1, sticky="ew")
+    justice_board_file_loc.insert(0, get_justice_board_location())
 
     # Get the location of the ilutzim file
-    ilutzim_file_loc = tk.Entry(change_file_loc_windows).grid(row=1, column=3, sticky="ew")
+    ilutzim_file_loc = tk.Entry(change_file_loc_windows)
+    ilutzim_file_loc.grid(row=1, column=3, sticky="ew")
+    ilutzim_file_loc.insert(0, get_ilutzim_location())
 
-    # Save justice board file location
-    save_justic_board_loc = tk.Button(change_file_loc_windows, text="שמור מיקום לוח צדק", bg="blue")
-    save_justic_board_loc.grid(row=3, column=1, sticky="nsew")
-
-    # Save ilutzim file location
-    save_ilutzim_loc = tk.Button(change_file_loc_windows, text="שמור מיקום קובץ אילוצים", bg="blue")
-    save_ilutzim_loc.grid(row=3, column=3, sticky="nsew")
+    # Save files locations button
+    save_files_locations = tk.Button(change_file_loc_windows, text="שמור מיקומים", bg="blue", command=lambda: save_files_new_locations(pd.read_csv('files_location.csv'),ilutzim_file_loc,justice_board_file_loc))
+    save_files_locations.grid(row=3, column=1, sticky="nsew")
 
 
-# Create grid of frames
+# Divide the windows into 7x7 frames
 for i in range(7):
     window.columnconfigure(i, weight=1, minsize=75)
     window.rowconfigure(i, weight=1, minsize=50)
@@ -143,11 +178,11 @@ generate_samba = tk.Button(text="סמבץ/ק.מ/ת.י",bg="blue")
 generate_samba.grid(row=3, column=2, sticky="nsew")
 
 #go to files location button
-go_to_files_loc = tk.Button(text="שנה קבצים", bg="blue", command = openChangeFileLocWindows)
+go_to_files_loc = tk.Button(text="שנה קבצים", bg="blue", command=openChangeFileLocWindows)
 go_to_files_loc.grid(row=0, column=6, sticky="nsew")
 
 #go to edit_people_button
-go_to_edit_people = tk.Button(text="ערוך אנשים", bg="blue", command = openEditPeopleWindow)
+go_to_edit_people = tk.Button(text="ערוך אנשים", bg="blue", command=openEditPeopleWindow)
 go_to_edit_people.grid(row=1, column=6, sticky="nsew")
 
 #open ilutzim file button

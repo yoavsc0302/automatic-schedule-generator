@@ -4,6 +4,10 @@ import pandas as pd
 import numpy as np
 import openpyxl
 import xlsxwriter
+import pickle
+# files_location_df = pd.read_csv('files_locations.csv')
+# ilutzim_file = files_location_df['ilutzim'][0]
+# justice_board_file = files_location_df['justice_board'][0]
 
 # Show entire df when printed
 pd.set_option("display.max_rows", None, "display.max_columns", None)
@@ -47,3 +51,7 @@ def create_ilutzim_excel(makel_names, manager_names, samba_names):
 
     # Close the Pandas Excel writer and output the Excel file.
     writer.save()
+
+def create_file_location_csv():
+    files_location_df = pd.DataFrame({'ilutzim':['i location'],'justice_board':['jb location']})
+    files_location = files_location_df.to_csv('files_location.csv')
