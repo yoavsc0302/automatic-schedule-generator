@@ -141,7 +141,11 @@ def open_edit_people_window():
     delete_person = tk.Button(edit_people_window, text="מחק בן אדם",
                               bg="blue",
                               command=lambda: em.delete_person(
-                                  chosen_option.get(), warning_label))
+                                  chosen_option.get(),
+                                  warning_label,
+                                  chosen_option,
+                                  edit_people_window,
+                                  list_if_empty))
     delete_person.grid(row=5, column=1, sticky="nsew")
 
 
