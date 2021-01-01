@@ -526,3 +526,99 @@ def delete_person_from_ilutzim(name_of_person):
             removed_name_df.to_excel(writer, sheet_name=key)
     writer.save()
 
+
+def convert_ilutzim_format_to_conan(name, ilutzim_df, df):
+    """
+    Read the ilutzim file and according to the data in the df, insert the
+    ilutzim entered by the people in the df into the:
+    'generating_makel_officers_df' while converting days and teams to tuples
+    :param name: the person to convert his ilutzim to the
+    'generating_makel_officers_df'
+    :param ilutzim_df: the ilutzim df
+    :param df: the updated 'generating_makel_officers_df'
+    """
+
+    # Dictionaries that will assist the function to convert days and team
+    # to numbers that will be set in the tuples
+    dict_days_convert = {'Sunday': 0, 'Monday': 1, 'Tuesday': 2, 'Wednesday': 3}
+    dict_team_convert = {'1': 0, '2': 1}
+
+    # For each day and team, check that the person doesn't have an ilutz in the
+    # ilutzim file.
+    # If he has, in the 'generating_makel_officers_df' suiting tuples change
+    # the value to '1'. else, change it to '0'
+    for day in ['Sunday', 'Monday', 'Tuesday', 'Wednesday']:
+        for team in ['1', '2', '3+4']:
+
+            # The value in the cell of the day + team combination
+            value_in_cell = ilutzim_df.loc[name][day][team]
+
+            # Check that the person has an ilutz of being that team in that day
+            if (value_in_cell != '0') and (value_in_cell != 0):
+                if team == '3+4':
+                    df.at[name, (2, dict_days_convert[day])] = '1'
+                    df.at[name, (3, dict_days_convert[day])] = '1'
+
+                else:
+                    df.at[name, (dict_team_convert[team],
+                                 dict_days_convert[day])] = '1'
+
+            else:
+                if team == '3+4':
+                    df.at[name, (2, dict_days_convert[day])] = '0'
+                    df.at[name, (3, dict_days_convert[day])] = '0'
+
+                else:
+                    df.at[name, (dict_team_convert[team],
+                                 dict_days_convert[day])] = '0'
+
+
+def define_df_for_generating_makel_officers():
+    """
+    Create a df that contains:
+    - Name of Makel officer
+    - For each team - how many shifts he's behind the person who holds the
+      record of being that team (1/2/3+4)
+    - The combination of team + day (team, day), that the person can't do in
+      the comming week according to the ilutzim file
+    :return: generate_makel_officer_df - the df explained above
+    """
+
+    # Get the 'Makel Officer' sheet from the ilutzim and the justice board files
+    dict_ilutzim = get_ilutzim_sheets_as_df()
+    dict_justice = get_justice_sheets_as_df()
+    ilutzim_df = dict_ilutzim['Makel Officer']
+    justice_df = dict_justice['Makel Officer']
+
+    # Create a list containing tuples of locations (0, 0), (1, 0)..
+    list_col = []
+    for i in range(4):
+        for j in range(4):
+            list_col.append((i, j))
+
+    # Create a df which it's columns are the location tuples
+    locations_pd = pd.DataFrame(columns=list_col)
+
+    # Concat the justice board df ['Name', '1', '2', '3+4'] with the
+    # locations df [(0, 0), (0, 1), (0, 2)...]
+    generate_makel_officer_df = pd.concat([justice_df, locations_pd])
+
+    # Set the values of the team: 1, 2, 3+4 columns, to how many times this
+    # person should be generated as this team in order to get equal with the
+    # person who has the highest record of being this team
+    for team in ['1', '2', '3+4']:
+        col = generate_makel_officer_df[team]
+        max_value = col.max()
+        generate_makel_officer_df[team] = max_value - generate_makel_officer_df[team]
+
+    generate_makel_officer_df.set_index('Name', inplace=True, drop=True)
+
+    # Execute this function for each name in df
+    for name in generate_makel_officer_df.index.values.tolist():
+        convert_ilutzim_format_to_conan(name, ilutzim_df, generate_makel_officer_df)
+
+    return generate_makel_officer_df
+
+
+
+
