@@ -527,7 +527,7 @@ def delete_person_from_ilutzim(name_of_person):
     writer.save()
 
 
-def convert_ilutzim_format_to_conan(name, ilutzim_df, df):
+def convert_ilutzim_format_to_conan_makel(name, ilutzim_df, df):
     """
     Read the ilutzim file and according to the data in the df, insert the
     ilutzim entered by the people in the df into the:
@@ -547,6 +547,7 @@ def convert_ilutzim_format_to_conan(name, ilutzim_df, df):
     # ilutzim file.
     # If he has, in the 'generating_makel_officers_df' suiting tuples change
     # the value to '1'. else, change it to '0'
+
     for day in ['Sunday', 'Monday', 'Tuesday', 'Wednesday']:
         for team in ['1', '2', '3+4']:
 
@@ -573,22 +574,122 @@ def convert_ilutzim_format_to_conan(name, ilutzim_df, df):
                                  dict_days_convert[day])] = '0'
 
 
-def define_df_for_generating_makel_officers():
+def convert_ilutzim_format_to_conan_manager(name, ilutzim_df, df):
     """
-    Create a df that contains:
-    - Name of Makel officer
-    - For each team - how many shifts he's behind the person who holds the
-      record of being that team (1/2/3+4)
-    - The combination of team + day (team, day), that the person can't do in
-      the comming week according to the ilutzim file
-    :return: generate_makel_officer_df - the df explained above
+    Read the ilutzim file and according to the data in the df, insert the
+    ilutzim entered by the people in the df into the:
+    'generating_managers_df' while converting days to tuples
+    :param name: the person to convert his ilutzim to the
+    'generating_managers_df'
+    :param ilutzim_df: the ilutzim df
+    :param df: the updated 'generating_managers_df'
     """
 
-    # Get the 'Makel Officer' sheet from the ilutzim and the justice board files
+    # Dictionaries that will assist the function to convert days and team
+    # to numbers that will be set in the tuples
+    dict_days_convert = {'Sunday': 0, 'Monday': 1, 'Tuesday': 2, 'Wednesday': 3}
+    dict_manager_convert = {'Manager': 0}
+
+    # For each day, check that the person doesn't have an ilutz in the
+    # ilutzim file.
+    # If he has, in the 'generating_ilutzim_df' suiting tuples change
+    # the value to '1'. else, change it to '0'
+
+    for day in ['Sunday', 'Monday', 'Tuesday', 'Wednesday']:
+
+        # The value in the cell of the day
+        value_in_cell = ilutzim_df.loc[name][day]
+
+        # Check that the person has an ilutz of being a toran in that day
+        if (value_in_cell != '0') and (value_in_cell != 0):
+            df.at[name, (0, dict_days_convert[day])] = '1'
+
+        else:
+            df.at[name, (0, dict_days_convert[day])] = '0'
+
+
+def convert_ilutzim_format_to_conan_samba(name, ilutzim_df, df):
+    """
+    Read the ilutzim file and according to the data in the df, insert the
+    ilutzim entered by the people in the df into the:
+    'generating_samba_df' while converting days to tuples
+    :param name: the person to convert his ilutzim to the
+    'generating_samba_df'
+    :param ilutzim_df: the ilutzim df
+    :param df: the updated 'generating_samba_df'
+    """
+
+    # Dictionaries that will assist the function to convert days and team
+    # to numbers that will be set in the tuples
+    dict_days_convert = {'Sunday': 0, 'Monday': 1, 'Tuesday': 2, 'Wednesday': 3}
+    dict_samba_convert = {'Samba': 0}
+
+    # For each day, check that the person doesn't have an ilutz in the
+    # ilutzim file.
+    # If he has, in the 'generating_ilutzim_df' suiting tuples change
+    # the value to '1'. else, change it to '0'
+
+    for day in ['Sunday', 'Monday', 'Tuesday', 'Wednesday']:
+
+        # The value in the cell of the day
+        value_in_cell = ilutzim_df.loc[name][day]
+
+        # Check that the person has an ilutz of being a samba in that day
+        if (value_in_cell != '0') and (value_in_cell != 0):
+            df.at[name, (0, dict_days_convert[day])] = '1'
+
+        else:
+            df.at[name, (0, dict_days_convert[day])] = '0'
+
+
+def convert_ilutzim_format_to_conan_toranim(name, ilutzim_df, df):
+    """
+    Read the ilutzim file and according to the data in the df, insert the
+    ilutzim entered by the people in the df into the:
+    'generating_toranim_df' while converting days to tuples
+    :param name: the person to convert his ilutzim to the
+    'generating_toranim_df'
+    :param ilutzim_df: the ilutzim df
+    :param df: the updated 'generating_toranim_df'
+    """
+    dict_days_convert = {'Sunday': 0, 'Monday': 1, 'Tuesday': 2, 'Wednesday': 3}
+    dict_manager_convert = {'Manager': 0}
+
+    # For each day, check that the person doesn't have an ilutz in the
+    # ilutzim file.
+    # If he has, in the 'generating_managers_df' suiting tuples change
+    # the value to '1'. else, change it to '0'
+
+    for day in ['Sunday', 'Monday', 'Tuesday', 'Wednesday']:
+        for i in range(2):
+            # The value in the cell of the day
+            value_in_cell = ilutzim_df.loc[name][day]
+
+            # Check that the person has an ilutz of being a manager in that day
+            if (value_in_cell != '0') and (value_in_cell != 0):
+                df.at[name, (i, dict_days_convert[day])] = '1'
+
+            else:
+                df.at[name, (i, dict_days_convert[day])] = '0'
+
+
+def define_df_for_generating_makel(job):
+    """
+    Create a df that contains:
+    - Name of Makel
+    - How many shifts he has done in each team (1/2/3+4)
+    - The combination of team + day (team, day), that the person can't do in
+      the comming week according to the ilutzim file
+    :param job: officer or an operator
+    :return: generate_makel_df - the df explained above
+    """
+
+    # Get the 'Makel Officer/operator' sheet from the ilutzim and the justice
+    # board files
     dict_ilutzim = get_ilutzim_sheets_as_df()
     dict_justice = get_justice_sheets_as_df()
-    ilutzim_df = dict_ilutzim['Makel Officer']
-    justice_df = dict_justice['Makel Officer']
+    ilutzim_df = dict_ilutzim[job]
+    justice_df = dict_justice[job]
 
     # Create a list containing tuples of locations (0, 0), (1, 0)..
     list_col = []
@@ -601,24 +702,168 @@ def define_df_for_generating_makel_officers():
 
     # Concat the justice board df ['Name', '1', '2', '3+4'] with the
     # locations df [(0, 0), (0, 1), (0, 2)...]
-    generate_makel_officer_df = pd.concat([justice_df, locations_pd])
+    generate_makel_df = pd.concat([justice_df, locations_pd])
 
-    # Set the values of the team: 1, 2, 3+4 columns, to how many times this
-    # person should be generated as this team in order to get equal with the
-    # person who has the highest record of being this team
-    for team in ['1', '2', '3+4']:
-        col = generate_makel_officer_df[team]
-        max_value = col.max()
-        generate_makel_officer_df[team] = max_value - generate_makel_officer_df[team]
-
-    generate_makel_officer_df.set_index('Name', inplace=True, drop=True)
+    generate_makel_df.set_index('Name', inplace=True, drop=True)
 
     # Execute this function for each name in df
-    for name in generate_makel_officer_df.index.values.tolist():
-        convert_ilutzim_format_to_conan(name, ilutzim_df, generate_makel_officer_df)
+    for name in generate_makel_df.index.values.tolist():
+        convert_ilutzim_format_to_conan_makel(name, ilutzim_df, generate_makel_df)
 
-    return generate_makel_officer_df
-
-
+    return generate_makel_df
 
 
+def define_df_for_generating_manager():
+    """
+    Create a df that contains:
+    - Name of Manager
+    - How many shifts he has done
+    - The combination of manager + day (manager, day), that the person can't
+     do in the comming week according to the ilutzim file
+    :return: generate_manager_df - the df explained above
+    """
+    # Get the 'Manager' sheet from the ilutzim and the justice
+    # board files
+    dict_ilutzim = get_ilutzim_sheets_as_df()
+    dict_justice = get_justice_sheets_as_df()
+    ilutzim_df = dict_ilutzim['Manager']
+    ilutzim_df.set_index('Name', inplace=True, drop=True)
+    justice_df = dict_justice['Manager']
+
+
+    # Create a list containing tuples of locations (0, 0), (1, 0)..
+    list_col = []
+    for i in range(4):
+        list_col.append((0, i))
+
+    # Create a df which it's columns are the location tuples
+    locations_df = pd.DataFrame(columns=list_col)
+
+    # Concat the justice board df ['Name', 'Sum'] with the
+    # locations df [(0, 0), (0, 1), (0, 2), (0, 3)]
+    generate_manager_df = pd.concat([justice_df, locations_df])
+
+    generate_manager_df.set_index('Name', inplace=True, drop=True)
+
+    # Execute this function for each name in df
+    for name in generate_manager_df.index.values.tolist():
+        convert_ilutzim_format_to_conan_manager(name, ilutzim_df, generate_manager_df)
+
+    return generate_manager_df
+
+
+def define_df_for_generating_samba():
+    """
+    Create a df that contains:
+    - Name of Manager
+    - How many shifts he has done
+    - The combination of manager + day (manager, day), that the person can't
+     do in the comming week according to the ilutzim file
+    :return: generate_manager_df - the df explained above
+    """
+    # Get the 'Manager' sheet from the ilutzim and the justice
+    # board files
+    dict_ilutzim = get_ilutzim_sheets_as_df()
+    dict_justice = get_justice_sheets_as_df()
+
+    ilutzim_df = dict_ilutzim['Samba']
+    ilutzim_df.set_index('Name', inplace=True, drop=True)
+
+    justice_df = dict_justice['Samba']
+    samba_df = justice_df[justice_df['Samba']]
+    samba_df = samba_df[['Name', 'Sum']].reset_index(drop=True)
+
+
+    # Create a list containing tuples of locations (0, 0), (1, 0)..
+    list_col = []
+    for i in range(4):
+        list_col.append((0, i))
+
+    # Create a df which it's columns are the location tuples
+    locations_df = pd.DataFrame(columns=list_col)
+
+    # Concat the justice board df ['Name', 'Sum'] with the
+    # locations df [(0, 0), (0, 1), (0, 2), (0, 3)]
+    generate_manager_df = pd.concat([samba_df, locations_df])
+
+    generate_manager_df.set_index('Name', inplace=True, drop=True)
+
+    # Execute this function for each name in df
+    for name in generate_manager_df.index.values.tolist():
+        convert_ilutzim_format_to_conan_manager(name, ilutzim_df, generate_manager_df)
+
+    return generate_manager_df
+
+
+def define_df_for_generating_toranim():
+    """
+    Create a df that contains:
+    - Name of toran / fast caller
+    - How many shifts he has done
+    - The combination of toran + day (toran, day), that the person can't
+     do in the comming week according to the ilutzim file
+    :return: generate_toranim_df - the df explained above
+    """
+    # Get the 'Samba' sheet from the ilutzim and the justice
+    # board files
+    dict_ilutzim = get_ilutzim_sheets_as_df()
+    dict_justice = get_justice_sheets_as_df()
+
+    ilutzim_df = dict_ilutzim['Samba']
+    ilutzim_df.set_index('Name', inplace=True, drop=True)
+
+    justice_df = dict_justice['Samba']
+    only_toranim_df = justice_df[justice_df['Fast caller and Toran']]
+    only_toranim_df = only_toranim_df[['Name', 'Sum']].reset_index(drop=True)
+
+
+    # Create a list containing tuples of locations (0, 0), (1, 0)..
+    list_col = []
+    for i in range(2):
+        for j in range(4):
+            list_col.append((i, j))
+
+    # Create a df which it's columns are the location tuples
+    locations_df = pd.DataFrame(columns=list_col)
+
+    # Concat the justice board df ['Name', 'Sum'] with the
+    # locations df [(0, 0), (0, 1), (0, 2), (0, 3)]
+    generate_toranim_df = pd.concat([only_toranim_df, locations_df])
+
+    generate_toranim_df.set_index('Name', inplace=True, drop=True)
+
+    # Execute this function for each name in df
+    for name in generate_toranim_df.index.values.tolist():
+        convert_ilutzim_format_to_conan_toranim(name, ilutzim_df, generate_toranim_df)
+
+    return generate_toranim_df
+
+
+
+def arrange_df_by_availability_and_justice(df, pos):
+    """
+    Takes the df and return the df of all available names in that position
+    and sort the names in an order of max to min shifts needed to be taken by
+    that person
+    :param df: the df that the function will sort
+    :param pos: the position in the tzevet conan (0,0), (0, 1)...
+    :return: the df of the availible people sorted from max to min
+    """
+
+    dict_loc_to_team = {'0': '1', '1': '2', '2': '3+4', '3': '3+4'}
+    team = dict_loc_to_team[f'{pos[0]}']
+
+    # Check if its makel, manager or toranim
+    # manager and toranim
+
+    if (len(list(df.columns)) == 5) or (len(list(df.columns)) == 9) or (len(list(df.columns)) == 7):
+        available = df[df[pos] == '0']['Sum']
+
+    # Makel
+    else:
+        available = df[df[pos] == '0'][team]
+
+    available_and_sorted_df = available.sort_values()
+
+
+    return available_and_sorted_df

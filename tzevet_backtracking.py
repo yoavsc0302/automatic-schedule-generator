@@ -1,22 +1,60 @@
 # This module contains the backtracking algorithms with the functions it uses
 import pandas as pd
+import excel_modifications as em
 
 tzevet_conan = pd.read_excel('tzevet_conan.xlsx',
-                                 sheet_name='Tzevet Conan',
-                                  engine='openpyxl', index_col=0)
-makel_officer_df = tzevet_conan.loc[['Officer 1',
-                                     'Officer 2',
-                                     'Officer 3',
-                                     'Officer 4']]
+                             sheet_name='Tzevet Conan',
+                             engine='openpyxl', index_col=0)
 
-index_list = makel_officer_df.index.values.tolist() # List of the names of
-# the indexes
-columns_list = makel_officer_df.columns.values.tolist() # List of the names of
-# the columns
+# (1) Backtracking functions ---------------------------------------------------
+
+
+def create_list(dict_of_available):
+    """
+    Insert into the list all the names of the available people from the dict
+    :param dict_of_available: the dictionary containing the name of each
+    available person and how many shifts he has done
+    :return: the list
+    """
+    list_of_available = []
+    for key in dict_of_available:
+        list_of_available.append(key)
+
+    return list_of_available
+
+
+def update_list(dict_of_available_people, list_to_update):
+    """
+    Move the person with the highest number of 'shifts behind' to
+    the first place in the list
+    :param dict_of_available_people: the dictionary containing the name of
+    each available person andhow many shifts is he behind
+    :param list_to_update: the list we are updating
+    :return: list_to_update
+    """
+    # Flags for keeping the lowest person name
+    person_with_min_shifts = ''
+    min_num_shifts = 9000000000
+
+    # Go over each person 'count', and check if it's the highest till that
+    # moment
+    for key in dict_of_available_people:
+        if dict_of_available_people[key] < min_num_shifts:
+            min_num_shifts = dict_of_available_people[key]
+            person_with_min_shifts = key
+
+    popped_item = list_to_update.pop(
+        list_to_update.index(person_with_min_shifts))
+    list_to_update.insert(0, popped_item)
+
+    return list_to_update
+
 
 def find_empty(df, index_list, col_list):
     """
     Get the location of the empty df's cells
+    :param col_list: list containing the names of the columns
+    :param index_list: list containing the names of the indexes
     :param df: the df that the function will work on
     :return: the location of the empty df's cells
     """
@@ -26,109 +64,289 @@ def find_empty(df, index_list, col_list):
 
             # If the cell is empty, get it's location
             if df.at[index_list[i], col_list[j]] == 'empty':
-                return (i, j) # row, col
+                return (i, j)  # row, col
 
-    return None # If all the cells in the df are set with valid names
+    # If all the cells in the df are set with valid names
+    return None
 
 
 def valid(df, name, pos, index_list, columns_list, list_of_names):
     """
-    Chek if the opttional name in the cell is a valid name
+    Chek if the optional name in the cell is a valid name
     :param df: the df we fill it's cells with names
     :param name: the name we want to check if it creates a valid df
     :param pos: the position in the df which we are trying to find a valid name
     for it
     :param index_list: a list of the rows' names (used to find the length)
     :param columns_list: a list of the cols' names (used to find the length)
-    :param list_of_names: a list of opptional names to be inserted to the df
+    :param list_of_names: a list of optional names to be inserted to the df
     :return: boolean: True if a valid name for the position was found
     """
+
+    # What is the person's job
+    job = ''
+
+    if index_list[0] == 'Officer 1':
+        job = 'Makel Officer'
+    elif index_list[0] == 'Operator 1':
+        job = 'Makel Operator'
+    elif index_list[0] == 'Manager':
+        job = 'Manager'
+    elif index_list[0] == 'Fast caller':
+        job = 'Fast caller'
+    elif index_list[0] == 'Samba':
+        job = 'Samba'
 
     # Set the optional name to the cell in the df which we are currently looking
     # for a match to it
     df.iat[pos[0], pos[1]] = name
-    current = df.iat[pos[0], pos[1]] # The current optional name
+    current = df.iat[pos[0], pos[1]]  # The current optional name
 
-    # Check that the same name doesn't repeat itself day after day for the
-    # same row
-    #if(pos[0] < 2): # Only for Officer 1 and 2
-    for i in range(len(columns_list)):
-            other_cell = df.iat[pos[0], i] # A cell in the row
+    # Check if the person is 'Makel officer' / Makel Operator
+    if (job == 'Makel Officer') or\
+       (job == 'Makel Operator') or\
+       (job == 'Fast caller') or\
+       (job == 'Samba'):
 
-            # Check if the to cells conatin the same name and
-            # are 2 DIFFERENT cells
-            if (current == other_cell) and (pos[1] != i):
+        # Check that the same name doesn't repeat itself day after day in
+        # the same row Only for Officer 1 and 2
+        if pos[0] < 2:
+            for i in range(len(columns_list)):
+                # A cell in the row
+                other_cell = df.iat[pos[0], i]
 
-                # Check if other cell is X steps from the current cell
-                # X = the ammount of optional names.
-                # This is done in order to use the max ammount of opptional
-                # names and not only the first names in the list over and over
-                if(abs(pos[1]-i) < len(list_of_names)):
+                # Check if the to cells contain the same name and
+                # are 2 DIFFERENT cells
+                if (current == other_cell) and (pos[1] != i):
+
+                    # Check if other cell is 1 steps from the current cell
+                    if abs(pos[1] - i) == 1:
+                        return False
+
+        # For makel operator: check that a person isn't team 1 a day after
+        # being team 2, to prevent him being on a double shift of 24 hours
+        if job == 'Makel Operator':
+
+            # check if we are in the second row (Operator 2), and on the third day
+            # (Tuesday)
+            if (pos[0] == 1) and (pos[1] != 3):
+                team_one_a_day_after = df.iat[0, pos[1]+1]
+                if current == team_one_a_day_after:
                     return False
 
-    # Check that the same name doesn't show up more than once in the col
-    for i in range(len(index_list)):
-            other_cell_col = df.iat[i, pos[1]] # A cell in the col
+        # Check that the same name doesn't show up more than once in the col
+        for i in range(len(index_list)):
+            other_cell_col = df.iat[i, pos[1]]  # A cell in the col
 
-            # Check if the to cells conatin the same name and
+            # Check if the to cells contain the same name and
             # are 2 DIFFERENT cells
             if (current == other_cell_col) and (pos[0] != i):
 
                 # Check if other cell is X steps from the current cell
-                # X = the ammount of optional names.
-                # This is done in order to use the max ammount of opptional
+                # X = the amount of optional names.
+                # This is done in order to use the max amount of optional
                 # names and not only the first names in the list over and over
-                if(abs(pos[0]-i) < len(list_of_names)):
+                if abs(pos[0] - i) < len(list_of_names):
                     return False
 
-    return True # If the name is valid
+    return True  # If the name is valid
 
 
-def generate(df):
+def generate(df, makel_officers_gen_df, index_list, cols_list):
     """
     Recursive function that generate names to the df
-    :param df: the df which names will be seted to
+    :param df: the df which names will be set to
+    :param makel_officers_gen_df: the df constructed by the:
+    'define_df_for_generating_makel' function from the
+     excel_modifications module
     :return: boolean: True if suited names found
     """
-    list_of_names = ['yoad', 'shelly', 'afek', 'yuval', 'mike']
-    find = find_empty(df, index_list, columns_list)
+
+    # Check if there are still empty cells in the df
+    find = find_empty(df, index_list, cols_list)
     if not find:
         return True
     else:
         row, col = find
 
-        # Check if the previews row completed succesfuly
-        if (col == 0) and (row != 0):
+    # Get a series of available and sorted people
+    names_se = em.arrange_df_by_availability_and_justice(makel_officers_gen_df,
+                                                         (row, col))
+    list_of_names = []
+    dict_of_names = {}
+    name_in_se = ''
+    sum_of_name = 0
 
-            # Get the used names, move them to the end of the list to let
-            # unused names to be used as well
-            used_names = df.iloc[row-1].to_list()
-            #print(used_names)
-            for name in used_names:
-                list_of_names.remove(name)
-                list_of_names.append(name)
+    # For every row in the series, set into the dictionary keys as the names,
+    # and values as the 'how many shifts this person is behind'
+    for i in range(len(names_se)):
+        name_in_se = names_se.index[i]
+        sum_of_name = names_se[i]
+        dict_of_names[name_in_se] = sum_of_name
 
-            #print(list_of_names)
+    # Create the list and update it by moving the person with the
+    # lowest number of times being team (1/2/3+4) to the start
+    list_of_names = create_list(dict_of_names)
+    list_of_names = update_list(dict_of_names, list_of_names)
 
-
+    # Check validation in the cell for each name in the available people list
     for name in list_of_names:
-        #print(find)
-        #print(df)
-        #print('------------------------------------------')
-        if valid(df, name, (row, col), index_list, columns_list, list_of_names):
+        if valid(df, name, (row, col), index_list, cols_list, list_of_names):
+
+            # Set the name to the cell
             df.iat[row, col] = name
 
-            if generate(df):
+            # Update the df about this person being a team
+            dict_loc_to_team = {'0': '1', '1': '2', '2': '3+4', '3': '3+4'}
+            team = dict_loc_to_team[f'{row}']
+
+            # Manager
+            if len(index_list) == 2:
+                makel_officers_gen_df.at[name, 'Sum'] += 1
+
+            # Toranim
+            elif len(index_list) == 6:
+                makel_officers_gen_df.at[name, 'Sum'] += 1
+
+            # Samba
+            elif index_list == ['Samba',
+                                'Fast caller',
+                                'Toran',
+                                'Operator 1']:
+                makel_officers_gen_df.at[name, 'Sum'] += 1
+
+            # Makel
+            elif len(index_list) == 4:
+                makel_officers_gen_df.at[name, team] += 1
+
+            if generate(df, makel_officers_gen_df, index_list, cols_list):
                 return True
 
         df.iat[row, col] = 'empty'
 
     return False
 
-print('Old df:')
-print(makel_officer_df)
-print('---------------------------------------')
-generate(makel_officer_df)
-print('New df:')
-print(makel_officer_df)
 
+# (1) Generate Makel Officers --------------------------------------------------
+
+makel_officers_conanim_df = tzevet_conan.loc[['Officer 1',
+                                              'Officer 2',
+                                              'Officer 3',
+                                              'Officer 4']]
+
+# List of the names of the indexes
+index_list_makel_officers = makel_officers_conanim_df.index.values.tolist()
+
+# List of the names of the columns
+cols_list_makel_officers = makel_officers_conanim_df.columns.values.tolist()
+
+makel_officers_gen_df = em.define_df_for_generating_makel('Makel Officer')
+
+# Generate 'Makel Officers' tzevet conan
+generate(makel_officers_conanim_df,
+         makel_officers_gen_df,
+         index_list_makel_officers,
+         cols_list_makel_officers)
+
+# Insert into the tzevet conan file the generated makel officers
+for index_name in ['Officer 1', 'Officer 2', 'Officer 3', 'Officer 4']:
+    tzevet_conan.loc[index_name] = makel_officers_conanim_df.loc[index_name]
+
+# (2) Generate Makel Operators -------------------------------------------------
+
+makel_operators_conanim_df = tzevet_conan.loc[['Operator 1',
+                                               'Operator 2',
+                                               'Operator 3',
+                                               'Operator 4']]
+
+# Makel operators' list of the names of the indexes
+index_list_makel_operators = makel_operators_conanim_df.index.values.tolist()
+
+# Makel operators' List of the names of the columns
+columns_list_makel_operators = makel_operators_conanim_df.columns.values.tolist()
+
+makel_operators_gen_df = em.define_df_for_generating_makel('Makel Operator')
+
+# Generate 'Makel operators' tzevet conan
+generate(makel_operators_conanim_df,
+         makel_operators_gen_df,
+         index_list_makel_operators,
+         columns_list_makel_operators)
+
+# Insert into the tzevet conan file the generated makel officers
+for index_name in ['Operator 1', 'Operator 2', 'Operator 3', 'Operator 4']:
+    tzevet_conan.loc[index_name] = makel_operators_conanim_df.loc[index_name]
+
+# (3) Generate Managers --------------------------------------------------------
+
+managers_conanim_df = tzevet_conan.loc[['Manager',
+                                        'Officer 1']]
+
+# Makel operators' list of the names of the indexes
+index_list_managers = managers_conanim_df.index.values.tolist()
+
+# Makel operators' List of the names of the columns
+columns_list_managers = managers_conanim_df.columns.values.tolist()
+
+managers_gen_df = em.define_df_for_generating_manager()
+
+# Generate 'Managers' tzevet conan and print it
+generate(managers_conanim_df,
+         managers_gen_df,
+         index_list_managers,
+         columns_list_managers)
+
+# Insert into the tzevet conan file the generated managers
+tzevet_conan.loc['Manager'] = managers_conanim_df.loc['Manager']
+
+# (4) Generate Fast caller + Toran ---------------------------------------------
+
+toranim_conanim_df = tzevet_conan.loc[['Fast caller',
+                                        'Toran',
+                                        'Operator 1',
+                                        'Operator 2',
+                                        'Operator 3',
+                                        'Operator 4']]
+
+# Makel operators' list of the names of the indexes
+index_list_toranim = toranim_conanim_df.index.values.tolist()
+
+# Makel operators' List of the names of the columns
+columns_list_toranim = toranim_conanim_df.columns.values.tolist()
+
+toranim_gen_df = em.define_df_for_generating_toranim()
+
+generate(toranim_conanim_df,
+         toranim_gen_df,
+         index_list_toranim,
+         columns_list_toranim)
+
+# Insert into the tzevet conan file the generated fast caller and toran
+tzevet_conan.loc['Fast caller'] = toranim_conanim_df.loc['Fast caller']
+tzevet_conan.loc['Toran'] = toranim_conanim_df.loc['Toran']
+
+
+# (5) Generate Samba -----------------------------------------------------------
+
+samba_conanim_df = tzevet_conan.loc[['Samba',
+                                     'Fast caller',
+                                     'Toran',
+                                     'Operator 1']]
+
+# Makel operators' list of the names of the indexes
+index_list_samba = samba_conanim_df.index.values.tolist()
+
+# Makel operators' List of the names of the columns
+columns_list_samba = samba_conanim_df.columns.values.tolist()
+
+samba_gen_df = em.define_df_for_generating_samba()
+
+generate(samba_conanim_df,
+         samba_gen_df,
+         index_list_samba,
+         columns_list_samba)
+
+# Insert into the tzevet conan file the generated samba
+tzevet_conan.loc['Samba'] = samba_conanim_df.loc['Samba']
+
+print(tzevet_conan)
