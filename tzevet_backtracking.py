@@ -2,9 +2,18 @@
 import pandas as pd
 import excel_modifications as em
 
-tzevet_conan = pd.read_excel('tzevet_conan.xlsx',
-                             sheet_name='Tzevet Conan',
-                             engine='openpyxl', index_col=0)
+
+def get_tzevet_conan():
+    tzevet_conan = pd.read_excel('tzevet_conan.xlsx',
+                                 sheet_name='Tzevet Conan',
+                                 engine='openpyxl', index_col=0)
+    return tzevet_conan
+
+tzevet_conan = get_tzevet_conan()
+
+
+print('First')
+print(tzevet_conan)
 
 # (1) Backtracking functions ---------------------------------------------------
 
@@ -39,7 +48,7 @@ def update_list(dict_of_available_people, list_to_update):
     # Go over each person 'count', and check if it's the highest till that
     # moment
     for key in dict_of_available_people:
-        if dict_of_available_people[key] < min_num_shifts:
+        if dict_of_available_people[key] <= min_num_shifts:
             min_num_shifts = dict_of_available_people[key]
             person_with_min_shifts = key
 
@@ -86,6 +95,9 @@ def valid(df, name, pos, index_list, columns_list, list_of_names):
     # What is the person's job
     job = ''
 
+    row = pos[0]
+    col = pos[1]
+
     if index_list[0] == 'Officer 1':
         job = 'Makel Officer'
     elif index_list[0] == 'Operator 1':
@@ -99,55 +111,59 @@ def valid(df, name, pos, index_list, columns_list, list_of_names):
 
     # Set the optional name to the cell in the df which we are currently looking
     # for a match to it
-    df.iat[pos[0], pos[1]] = name
-    current = df.iat[pos[0], pos[1]]  # The current optional name
+    df.iat[row, col] = name
+    current = df.iat[row, col]  # The current optional name
 
-    # Check if the person is 'Makel officer' / Makel Operator
-    if (job == 'Makel Officer') or\
-       (job == 'Makel Operator') or\
-       (job == 'Fast caller') or\
-       (job == 'Samba'):
+    # Check if the person is 'Makel Officer', 'Makel Operator', 'Fast caller', 'Samba'
+    if job in ['Makel Officer', 'Makel Operator', 'Fast caller', 'Samba', 'Manager']:
 
         # Check that the same name doesn't repeat itself day after day in
-        # the same row Only for Officer 1 and 2
-        if pos[0] < 2:
+        # the same row Only for rows 1 + 2:
+        # Makel officer/manager it's: Officer/Operator 1 + 2
+        # Fast caller it's: fast caller + toran
+        # Samba it's: samba
+        # Manager it's: manager
+        if row < 2:
             for i in range(len(columns_list)):
                 # A cell in the row
-                other_cell = df.iat[pos[0], i]
+                other_cell = df.iat[row, i]
 
                 # Check if the to cells contain the same name and
                 # are 2 DIFFERENT cells
-                if (current == other_cell) and (pos[1] != i):
+                if (current == other_cell) and (col != i):
 
                     # Check if other cell is 1 steps from the current cell
-                    if abs(pos[1] - i) == 1:
+                    if abs(col - i) == 1:
                         return False
 
         # For makel operator: check that a person isn't team 1 a day after
         # being team 2, to prevent him being on a double shift of 24 hours
-        if job == 'Makel Operator':
+        if job in ['Makel Operator']:
 
-            # check if we are in the second row (Operator 2), and on the third day
+            # Check if we are in the second row (Operator 2), and on the third day
             # (Tuesday)
-            if (pos[0] == 1) and (pos[1] != 3):
-                team_one_a_day_after = df.iat[0, pos[1]+1]
+            if (row == 1) and (col != 3):
+                team_one_a_day_after = df.iat[0, col+1]
                 if current == team_one_a_day_after:
                     return False
 
         # Check that the same name doesn't show up more than once in the col
         for i in range(len(index_list)):
-            other_cell_col = df.iat[i, pos[1]]  # A cell in the col
+            other_cell_col = df.iat[i, col]  # A cell in the col
 
             # Check if the to cells contain the same name and
             # are 2 DIFFERENT cells
-            if (current == other_cell_col) and (pos[0] != i):
+            if (current == other_cell_col) and (row != i):
 
                 # Check if other cell is X steps from the current cell
                 # X = the amount of optional names.
                 # This is done in order to use the max amount of optional
                 # names and not only the first names in the list over and over
-                if abs(pos[0] - i) < len(list_of_names):
-                    return False
+                if job in ['Makel Officer', 'Makel Operator']:
+                    if abs(row - i) < len(list_of_names):
+                        return False
+                else:
+                        return False
 
     return True  # If the name is valid
 
@@ -229,124 +245,155 @@ def generate(df, makel_officers_gen_df, index_list, cols_list):
 
 # (1) Generate Makel Officers --------------------------------------------------
 
-makel_officers_conanim_df = tzevet_conan.loc[['Officer 1',
-                                              'Officer 2',
-                                              'Officer 3',
-                                              'Officer 4']]
+def generate_makel_officer():
+    print('-------------------------------------')
+    print('Officer')
+    print(tzevet_conan)
+    makel_officers_conanim_df = tzevet_conan.loc[['Officer 1',
+                                                  'Officer 2',
+                                                  'Officer 3',
+                                                  'Officer 4']]
 
-# List of the names of the indexes
-index_list_makel_officers = makel_officers_conanim_df.index.values.tolist()
 
-# List of the names of the columns
-cols_list_makel_officers = makel_officers_conanim_df.columns.values.tolist()
+    # List of the names of the indexes
+    index_list_makel_officers = makel_officers_conanim_df.index.values.tolist()
 
-makel_officers_gen_df = em.define_df_for_generating_makel('Makel Officer')
+    # List of the names of the columns
+    cols_list_makel_officers = makel_officers_conanim_df.columns.values.tolist()
 
-# Generate 'Makel Officers' tzevet conan
-generate(makel_officers_conanim_df,
-         makel_officers_gen_df,
-         index_list_makel_officers,
-         cols_list_makel_officers)
+    makel_officers_gen_df = em.define_df_for_generating_makel('Makel Officer')
 
-# Insert into the tzevet conan file the generated makel officers
-for index_name in ['Officer 1', 'Officer 2', 'Officer 3', 'Officer 4']:
-    tzevet_conan.loc[index_name] = makel_officers_conanim_df.loc[index_name]
+    generate(makel_officers_conanim_df,
+             makel_officers_gen_df,
+             index_list_makel_officers,
+             cols_list_makel_officers)
+
+    # Insert into the tzevet conan file the generated makel officers
+    for index_name in ['Officer 1', 'Officer 2', 'Officer 3', 'Officer 4']:
+        tzevet_conan.loc[index_name] = makel_officers_conanim_df.loc[index_name]
 
 # (2) Generate Makel Operators -------------------------------------------------
 
-makel_operators_conanim_df = tzevet_conan.loc[['Operator 1',
-                                               'Operator 2',
-                                               'Operator 3',
-                                               'Operator 4']]
+def generate_makel_operators():
+    print('-------------------------------------')
+    print('Operatpr')
+    print(tzevet_conan)
 
-# Makel operators' list of the names of the indexes
-index_list_makel_operators = makel_operators_conanim_df.index.values.tolist()
+    makel_operators_conanim_df = tzevet_conan.loc[['Operator 1',
+                                                   'Operator 2',
+                                                   'Operator 3',
+                                                   'Operator 4']]
 
-# Makel operators' List of the names of the columns
-columns_list_makel_operators = makel_operators_conanim_df.columns.values.tolist()
+    # Makel operators' list of the names of the indexes
+    index_list_makel_operators = makel_operators_conanim_df.index.values.tolist()
 
-makel_operators_gen_df = em.define_df_for_generating_makel('Makel Operator')
+    # Makel operators' List of the names of the columns
+    columns_list_makel_operators = makel_operators_conanim_df.columns.values.tolist()
 
-# Generate 'Makel operators' tzevet conan
-generate(makel_operators_conanim_df,
-         makel_operators_gen_df,
-         index_list_makel_operators,
-         columns_list_makel_operators)
+    makel_operators_gen_df = em.define_df_for_generating_makel('Makel Operator')
 
-# Insert into the tzevet conan file the generated makel officers
-for index_name in ['Operator 1', 'Operator 2', 'Operator 3', 'Operator 4']:
-    tzevet_conan.loc[index_name] = makel_operators_conanim_df.loc[index_name]
+    generate(makel_operators_conanim_df,
+             makel_operators_gen_df,
+             index_list_makel_operators,
+             columns_list_makel_operators)
+
+    # Insert into the tzevet conan file the generated makel officers
+    for index_name in ['Operator 1', 'Operator 2', 'Operator 3', 'Operator 4']:
+        tzevet_conan.loc[index_name] = makel_operators_conanim_df.loc[index_name]
 
 # (3) Generate Managers --------------------------------------------------------
 
-managers_conanim_df = tzevet_conan.loc[['Manager',
-                                        'Officer 1']]
+def generate_managers():
+    print('-------------------------------')
+    print('manager')
+    print(tzevet_conan)
+    managers_conanim_df = tzevet_conan.loc[['Manager',
+                                            'Officer 1',
+                                            'Officer 2']]
 
-# Makel operators' list of the names of the indexes
-index_list_managers = managers_conanim_df.index.values.tolist()
+    # Makel operators' list of the names of the indexes
+    index_list_managers = managers_conanim_df.index.values.tolist()
 
-# Makel operators' List of the names of the columns
-columns_list_managers = managers_conanim_df.columns.values.tolist()
+    # Makel operators' List of the names of the columns
+    columns_list_managers = managers_conanim_df.columns.values.tolist()
 
-managers_gen_df = em.define_df_for_generating_manager()
+    managers_gen_df = em.define_df_for_generating_manager()
 
-# Generate 'Managers' tzevet conan and print it
-generate(managers_conanim_df,
-         managers_gen_df,
-         index_list_managers,
-         columns_list_managers)
+    generate(managers_conanim_df,
+             managers_gen_df,
+             index_list_managers,
+             columns_list_managers)
 
-# Insert into the tzevet conan file the generated managers
-tzevet_conan.loc['Manager'] = managers_conanim_df.loc['Manager']
+    # Insert into the tzevet conan file the generated managers
+    tzevet_conan.loc['Manager'] = managers_conanim_df.loc['Manager']
 
 # (4) Generate Fast caller + Toran ---------------------------------------------
 
-toranim_conanim_df = tzevet_conan.loc[['Fast caller',
-                                        'Toran',
-                                        'Operator 1',
-                                        'Operator 2',
-                                        'Operator 3',
-                                        'Operator 4']]
+def generate_toranim():
+    print('-------------------------------')
+    print('toranim')
+    print(tzevet_conan)
+    toranim_conanim_df = tzevet_conan.loc[['Fast caller',
+                                           'Toran',
+                                           'Operator 1',
+                                           'Operator 2',
+                                           'Operator 3',
+                                           'Operator 4']]
 
-# Makel operators' list of the names of the indexes
-index_list_toranim = toranim_conanim_df.index.values.tolist()
+    # Makel operators' list of the names of the indexes
+    index_list_toranim = toranim_conanim_df.index.values.tolist()
 
-# Makel operators' List of the names of the columns
-columns_list_toranim = toranim_conanim_df.columns.values.tolist()
+    # Makel operators' List of the names of the columns
+    columns_list_toranim = toranim_conanim_df.columns.values.tolist()
 
-toranim_gen_df = em.define_df_for_generating_toranim()
+    toranim_gen_df = em.define_df_for_generating_toranim()
 
-generate(toranim_conanim_df,
-         toranim_gen_df,
-         index_list_toranim,
-         columns_list_toranim)
+    generate(toranim_conanim_df,
+             toranim_gen_df,
+             index_list_toranim,
+             columns_list_toranim)
 
-# Insert into the tzevet conan file the generated fast caller and toran
-tzevet_conan.loc['Fast caller'] = toranim_conanim_df.loc['Fast caller']
-tzevet_conan.loc['Toran'] = toranim_conanim_df.loc['Toran']
+    # Insert into the tzevet conan file the generated fast caller and toran
+    tzevet_conan.loc['Fast caller'] = toranim_conanim_df.loc['Fast caller']
+    tzevet_conan.loc['Toran'] = toranim_conanim_df.loc['Toran']
 
 
 # (5) Generate Samba -----------------------------------------------------------
 
-samba_conanim_df = tzevet_conan.loc[['Samba',
-                                     'Fast caller',
-                                     'Toran',
-                                     'Operator 1']]
+def generate_samba():
+    print('-------------------------------')
+    print('samba')
+    print(tzevet_conan)
+    samba_conanim_df = tzevet_conan.loc[['Samba',
+                                         'Fast caller',
+                                         'Toran',
+                                         'Operator 1']]
 
-# Makel operators' list of the names of the indexes
-index_list_samba = samba_conanim_df.index.values.tolist()
+    # Makel operators' list of the names of the indexes
+    index_list_samba = samba_conanim_df.index.values.tolist()
 
-# Makel operators' List of the names of the columns
-columns_list_samba = samba_conanim_df.columns.values.tolist()
+    # Makel operators' List of the names of the columns
+    columns_list_samba = samba_conanim_df.columns.values.tolist()
 
-samba_gen_df = em.define_df_for_generating_samba()
+    samba_gen_df = em.define_df_for_generating_samba()
+    generate(samba_conanim_df,
+             samba_gen_df,
+             index_list_samba,
+             columns_list_samba)
 
-generate(samba_conanim_df,
-         samba_gen_df,
-         index_list_samba,
-         columns_list_samba)
+    # Insert into the tzevet conan file the generated samba
+    tzevet_conan.loc['Samba'] = samba_conanim_df.loc['Samba']
 
-# Insert into the tzevet conan file the generated samba
-tzevet_conan.loc['Samba'] = samba_conanim_df.loc['Samba']
 
-print(tzevet_conan)
+# (5) Generate All -------------------------------------------------------------
+
+def generate_all():
+    generate_makel_officer()
+    generate_makel_operators()
+    generate_managers()
+    generate_toranim()
+    generate_samba()
+
+
+
+

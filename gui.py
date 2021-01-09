@@ -3,6 +3,7 @@ import tkinter as tk
 import pandas as pd
 import webbrowser
 import excel_modifications as em
+import os
 
 
 def open_url(url):
@@ -10,7 +11,7 @@ def open_url(url):
     Opens the given url
     :param url: the url which the function will open
     """
-    webbrowser.open(url)
+    os.startfile(url)
 
 
 def get_ilutzim_location():
@@ -127,7 +128,7 @@ def open_edit_people_window():
     warning_label.grid(row=2, column=1)
 
     # Add person button
-    add_person = tk.Button(edit_people_window, text="הוסף בן אדם", bg="blue",
+    add_person = tk.Button(edit_people_window, text="הוסף בן אדם", bg="#ff677d",
                            command=lambda: em.add_new_person(name.get(),
                                                              manager_var,
                                                              makel_officer_var,
@@ -139,7 +140,7 @@ def open_edit_people_window():
 
     # Delete person button
     delete_person = tk.Button(edit_people_window, text="מחק בן אדם",
-                              bg="blue",
+                              bg="#ff677d",
                               command=lambda: em.delete_person(
                                   chosen_option.get(),
                                   warning_label,
@@ -194,7 +195,7 @@ def open_change_file_loc_window():
 
     # Save files locations button
     save_files_locations = tk.Button(change_file_loc_windows,
-                                     text="שמור מיקומים", bg="blue",
+                                     text="שמור מיקומים", bg="#ff677d",
                                      command=lambda:
                                      save_files_new_locations(
                                          pd.read_csv('files_location.csv'),

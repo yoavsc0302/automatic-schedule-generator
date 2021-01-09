@@ -71,6 +71,26 @@ def get_ilutzim_sheets_as_df():
             'Samba': ilutzim_samba_df}
 
 
+def get_ilutzim_location():
+    """
+    Get the ilutzim file location
+    :return: the ilutzim file location as a string
+    """
+    files_location_df = pd.read_csv('files_location.csv')
+    ilutzim_file = files_location_df['ilutzim'][0]
+    return ilutzim_file
+
+
+def get_justice_board_location():
+    """
+    Get the justice board file location
+    :return: the justice board file location as a string
+    """
+    files_location_df = pd.read_csv('files_location.csv')
+    justice_board_file = files_location_df['justice_board'][0]
+    return justice_board_file
+
+
 def create_ilutzim_excel():
     """
     Create the ilutzim excel file as a 'Multiply indexed DataFrame'
@@ -358,7 +378,6 @@ def add_new_person(name, manager_var, makel_officer_var, makel_operator_var,
                                 'אותו \nכדי שיתאפשר \nלשמור את השינויים!'
         warning_label['bg'] = 'red'
 
-
 def add_new_person_to_ilutzim(job, name):
     """
     Add the new person to the ilutzim file
@@ -408,6 +427,26 @@ def add_new_person_to_ilutzim(job, name):
     workbook.remove(workbook[job])
     dict_of_df[job].to_excel(writer, sheet_name=job)
     writer.save()
+
+
+def get_ilutzim_location():
+    """
+    Get the ilutzim file location
+    :return: the ilutzim file location as a string
+    """
+    files_location_df = pd.read_csv('files_location.csv')
+    ilutzim_file = files_location_df['ilutzim'][0]
+    return ilutzim_file
+
+
+def get_justice_board_location():
+    """
+    Get the justice board file location
+    :return: the justice board file location as a string
+    """
+    files_location_df = pd.read_csv('files_location.csv')
+    justice_board_file = files_location_df['justice_board'][0]
+    return justice_board_file
 
 
 def get_list_of_all_people():
@@ -839,7 +878,6 @@ def define_df_for_generating_toranim():
     return generate_toranim_df
 
 
-
 def arrange_df_by_availability_and_justice(df, pos):
     """
     Takes the df and return the df of all available names in that position
@@ -856,7 +894,10 @@ def arrange_df_by_availability_and_justice(df, pos):
     # Check if its makel, manager or toranim
     # manager and toranim
 
-    if (len(list(df.columns)) == 5) or (len(list(df.columns)) == 9) or (len(list(df.columns)) == 7):
+    # Managers /
+    if (len(list(df.columns)) == 5) or \
+            (len(list(df.columns)) == 9) or \
+            (len(list(df.columns)) == 7):
         available = df[df[pos] == '0']['Sum']
 
     # Makel
@@ -867,3 +908,124 @@ def arrange_df_by_availability_and_justice(df, pos):
 
 
     return available_and_sorted_df
+
+
+def insert_generated_tzevet_conan_df_to_tzevet_conan_file(tzevet_conan_df):
+    with pd.ExcelWriter('tzevet_conan.xlsx', engine='openpyxl', mode='a') \
+            as writer:
+        workbook = writer.book
+
+    workbook.remove(workbook['Tzevet Conan'])
+    tzevet_conan_df.to_excel(writer, sheet_name='Tzevet Conan')
+    writer.save()
+
+
+def insert_sum_to_justice_board(tzevet_conan_df):
+    """
+    Go over the enitre tzevet conan file that was generated and according to it,
+    insert into the justice board file, for each name in each job, the number
+    of times that the person had a shift in this job
+    :param tzevet_conan_df: the tzevet conan df that was generated
+    """
+    dict_of_all_jobs = {'Manager': {}, 'Samba': {}, 'Fast caller': {},
+                        'Toran': {},
+                        'Officer 1': {}, 'Officer 2': {}, 'Officer 3': {},
+                        'Officer 4': {},
+                        'Operator 1': {}, 'Operator 2': {}, 'Operator 3': {},
+                        'Operator 4': {}}
+    dict_of_sum = {}
+
+    # For every job in the tzevet conan (manager, samba, officer..), and for
+    # every day of the week
+    for job in dict_of_all_jobs.keys():
+        for day in ['Sunday', 'Monday', 'Tuesday', 'Wednesday']:
+
+            # The name of the person that is in the cell
+            name = tzevet_conan_df.loc[job][day]
+
+            # If the name is not in any of the sheets, that mean he is
+            # miluim / hatzach, so continue:
+            if name not in get_list_of_all_people():
+                continue
+
+            # Check if he is already in the dict (all ready in the row)
+            if name not in dict_of_sum.keys():
+
+                # Add him to the dict and set his sum to 1
+                dict_of_sum[name] = 1
+
+            else:
+
+                # Add 1 to he's sum
+                dict_of_sum[name] += 1
+
+        # Add the dict of people and their sum, into the dict of all jobs, as
+        # the values of the keys (the jobs)
+        dict_of_all_jobs[job] = dict_of_sum
+        dict_of_sum = {}
+
+    # Dictionairy containing the df of each sheet in the ilutzim file
+    dict_of_justice_dfs = get_justice_sheets_as_df()
+
+    # Getting the df's from the dicionairy
+    makel_officer_df_justice = dict_of_justice_dfs['Makel Officer']
+    makel_operator_df_justice = dict_of_justice_dfs['Makel Operator']
+    manager_df_justice = dict_of_justice_dfs['Manager']
+    samba_df_justice = dict_of_justice_dfs['Samba']
+
+    with pd.ExcelWriter('justice_board.xlsx', engine='openpyxl', mode='a') \
+            as writer:
+        workbook = writer.book
+
+    # For every job in the tzevet conan (manager, samba, officer..), and for
+    # every name in the dict_of_sum that is being the value of the
+    # dict_of_all_jobs
+    for job in dict_of_all_jobs.keys():
+        for name in dict_of_all_jobs[job].keys():
+
+            # Get the sum of that person's
+            sum_of_name = dict_of_all_jobs[job][name]
+
+            if job == 'Manager':
+                index = manager_df_justice[manager_df_justice['Name'] == name]['Sum'].index[0]
+                manager_df_justice.at[index, 'Sum'] += sum_of_name
+
+            elif job in ['Samba', 'Fast caller', 'Toran']:
+                index = samba_df_justice[samba_df_justice['Name'] == name]['Sum'].index[0]
+                samba_df_justice.at[index, 'Sum'] += sum_of_name
+
+            elif job in ['Officer 1', 'Officer 2']:
+                index = makel_officer_df_justice[makel_officer_df_justice['Name'] == name][job[-1]].index[0]
+                print('Index')
+                print(index)
+                print('col')
+                print(job[-1])
+                makel_officer_df_justice.at[index, job[-1]] += sum_of_name
+
+            elif job in ['Officer 3', 'Officer 4']:
+                index = makel_officer_df_justice[makel_officer_df_justice['Name'] == name]['3+4'].index[0]
+                makel_officer_df_justice.at[index, '3+4'] += sum_of_name
+
+            elif job in ['Operator 1', 'Operator 2']:
+                index = makel_operator_df_justice[makel_operator_df_justice['Name'] == name][job[-1]].index[0]
+                makel_operator_df_justice.at[index, job[-1]] += sum_of_name
+
+            elif job in ['Operator 3', 'Operator 4']:
+                index = makel_operator_df_justice[makel_operator_df_justice['Name'] == name]['3+4'].index[0]
+                makel_operator_df_justice.at[index, '3+4'] += sum_of_name
+
+    dict_of_updated_df = {'Manager': manager_df_justice,
+                          'Samba': samba_df_justice,
+                          'Makel Officer': makel_officer_df_justice,
+                          'Makel Operator': makel_operator_df_justice}
+
+    for sheet in ['Manager', 'Samba', 'Makel Officer', 'Makel Operator']:
+        workbook.remove(workbook[sheet])
+        dict_of_updated_df[sheet].to_excel(writer, sheet_name=sheet)
+        writer.save()
+
+
+
+
+
+
