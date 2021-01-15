@@ -40,10 +40,16 @@ def get_justice_sheets_as_df():
                                engine='openpyxl', index_col=0)
     samba_df = pd.read_excel('justice_board.xlsx', sheet_name='Samba',
                              engine='openpyxl', index_col=0)
+    toran_df = pd.read_excel('justice_board.xlsx', sheet_name='Toran',
+                             engine='openpyxl', index_col=0)
+    driver_df = pd.read_excel('justice_board.xlsx', sheet_name='Driver',
+                             engine='openpyxl', index_col=0)
     return {'Makel Officer': makel_officer_df,
             'Makel Operator': makel_operator_df,
             'Manager': manager_df,
-            'Samba': samba_df}
+            'Samba': samba_df,
+            'Toran': toran_df,
+            'Driver': driver_df}
 
 
 def get_ilutzim_sheets_as_df():
@@ -64,11 +70,17 @@ def get_ilutzim_sheets_as_df():
                                        engine='openpyxl', index_col=0)
     ilutzim_samba_df = pd.read_excel('ilutzim.xlsx', sheet_name='Samba',
                                      engine='openpyxl', index_col=0)
+    ilutzim_toran_df = pd.read_excel('ilutzim.xlsx', sheet_name='Toran',
+                                     engine='openpyxl', index_col=0)
+    ilutzim_driver_df = pd.read_excel('ilutzim.xlsx', sheet_name='Driver',
+                                     engine='openpyxl', index_col=0)
 
     return {'Makel Officer': ilutzim_makel_officer_df,
             'Makel Operator': ilutzim_makel_operator_df,
             'Manager': ilutzim_manager_df,
-            'Samba': ilutzim_samba_df}
+            'Samba': ilutzim_samba_df,
+            'Toran': ilutzim_toran_df,
+            'Driver': ilutzim_driver_df}
 
 
 def get_ilutzim_location():
@@ -125,6 +137,12 @@ def create_ilutzim_excel():
     # Samba df:
     samba_df = pd.DataFrame(columns=columns)
 
+    # Driver df:
+    driver_df = pd.DataFrame(columns=columns)
+
+    # Toran df:
+    toran_df = pd.DataFrame(columns=columns)
+
     # Create a Pandas Excel writer using XlsxWriter as the engine.
     writer = pd.ExcelWriter('ilutzim.xlsx', engine='xlsxwriter')
 
@@ -133,6 +151,8 @@ def create_ilutzim_excel():
     makel_operator_df.to_excel(writer, sheet_name='Makel Operator')
     manager_df.to_excel(writer, sheet_name='Manager')
     samba_df.to_excel(writer, sheet_name='Samba')
+    driver_df.to_excel(writer, sheet_name='Driver')
+    toran_df.to_excel(writer, sheet_name='Toran')
 
     # Close the Pandas Excel writer and output the Excel file.
     writer.save()
@@ -154,9 +174,14 @@ def create_justice_board_excel():
     columns = ['Name', 'Sum']
     manager_df = pd.DataFrame(columns=columns)
 
+    # Driver df:
+    driver_df = pd.DataFrame(columns=columns)
+
     # Samba df:
-    columns = ['Name', 'Sum', 'Samba', 'Fast caller and Toran']
     samba_df = pd.DataFrame(columns=columns)
+
+    # Toran df:
+    toran_df = pd.DataFrame(columns=columns)
 
     # Create a Pandas Excel writer using XlsxWriter as the engine.
     writer = pd.ExcelWriter('justice_board.xlsx', engine='xlsxwriter')
@@ -166,6 +191,8 @@ def create_justice_board_excel():
     makel_operate_df.to_excel(writer, sheet_name='Makel Operator')
     manager_df.to_excel(writer, sheet_name='Manager')
     samba_df.to_excel(writer, sheet_name='Samba')
+    driver_df.to_excel(writer, sheet_name='Driver')
+    toran_df.to_excel(writer, sheet_name='Toran')
 
     # Close the Pandas Excel writer and output the Excel file.
     writer.save()
@@ -187,7 +214,7 @@ def create_tzevet_conan_excel():
 
     # Define columns and index names:
     columns = ['Sunday', 'Monday', 'Tuesday', 'Wednesday']
-    index = ['Manager', 'Samba', 'Fast caller', 'Toran',
+    index = ['Manager', 'Samba', 'Driver', 'Toran',
              'Officer 1', 'Officer 2', 'Officer 3', 'Officer 4',
              'Operator 1', 'Operator 2', 'Operator 3', 'Operator 4']
     tzevet_conan_df = pd.DataFrame(columns=columns, index=index, data='empty')
@@ -203,7 +230,7 @@ def create_tzevet_conan_excel():
 
 
 def add_new_person(name, manager_var, makel_officer_var, makel_operator_var,
-                   samba_var, fast_and_toran_var, warning_label):
+                   samba_var, toran_var, driver_var, warning_label):
     """
     Add a new person to the right sheets according to the jobs he can do:
     manager/makel officer/makel opperator/samba/fast and toran
@@ -214,7 +241,7 @@ def add_new_person(name, manager_var, makel_officer_var, makel_operator_var,
     :param makel_operator_var: equals 1 if the makel operator job checkbox
      is checked
     :param samba_var: equals 1 if the samba job checkbox is checked
-    :param fast_and_toran_var: equals 1 if the fast and toran job checkbox
+    :param toran_var: equals 1 if the fast and toran job checkbox
      is checked
     :param warning_label: the warning label in the window that it's text
      will apperat in case of some kind of error
@@ -238,6 +265,12 @@ def add_new_person(name, manager_var, makel_officer_var, makel_operator_var,
                                    engine='openpyxl', index_col=0)
         samba_df = pd.read_excel('justice_board.xlsx',
                                  sheet_name='Samba',
+                                 engine='openpyxl', index_col=0)
+        toran_df = pd.read_excel('justice_board.xlsx',
+                                 sheet_name='Toran',
+                                 engine='openpyxl', index_col=0)
+        driver_df = pd.read_excel('justice_board.xlsx',
+                                 sheet_name='Driver',
                                  engine='openpyxl', index_col=0)
 
         # If the new person is a 'makel officer', insert his name into
@@ -321,49 +354,58 @@ def add_new_person(name, manager_var, makel_officer_var, makel_operator_var,
             # add_new_person_to_ilutzim('Manager', name)
             add_new_person_to_ilutzim(job='Manager', name=name)
 
-        # If the new person is either a 'samba' or 'fast and toran',
-        # insert his name into the 'samba' sheet and specify in the 'samba' and
-        # 'fast and toran' columns what he is by 'TRUE' and 'False' values
-        # Toran and Toran+Samba share the same mean
-        if fast_and_toran_var.get() == 1:
+
+        # If the new person is a 'samba', insert his name into
+        # the 'samba' sheet and set his sum to the average of everybodies' sum
+        if samba_var.get() == 1:
+            workbook.remove(workbook['Samba'])
             try:
-                sum_to_be_set = math.floor(samba_df
-                                           [samba_df['Fast caller and Toran']
-                                            == True]['Sum'].mean())
-
-            except:  # If this is the first person of this kind in the sheet
+                sum_to_be_set = math.floor(samba_df['Sum'].mean())
+            except:  # If this is the first person in the sheet
                 sum_to_be_set = 0
-
-            if samba_var.get() == 0:
-                samba_df = samba_df.append({'Name': name, 'Sum': sum_to_be_set,
-                                            'Samba': False,
-                                            'Fast caller and Toran': True},
-                                           ignore_index=True)
-            else:
-                samba_df = samba_df.append({'Name': name, 'Sum': sum_to_be_set,
-                                            'Samba': True,
-                                            'Fast caller and Toran': True},
+            samba_df = samba_df.append({'Name': name, 'Sum': sum_to_be_set},
                                            ignore_index=True)
             # Write dataframe to the worksheet.
-            workbook.remove(workbook['Samba'])
             samba_df.to_excel(writer, sheet_name='Samba')
 
+            # add_new_person_to_ilutzim('Manager', name)
             add_new_person_to_ilutzim(job='Samba', name=name)
-        else:
-            if samba_var.get() == 1:
-                try:
-                    sum_to_be_set = math.floor(
-                        samba_df[(samba_df['Fast caller and Toran'] == False)
-                                 & (samba_df['Samba'] == True)]['Sum'].mean())
-                except:  # If this is the first person of this kind in the sheet
-                    sum_to_be_set = 0
-                samba_df = samba_df.append(
-                    {'Name': name, 'Sum': sum_to_be_set, 'Samba': True,
-                     'Fast caller and Toran': False}, ignore_index=True)
-                workbook.remove(workbook['Samba'])
-                samba_df.to_excel(writer, sheet_name='Samba')
 
-                add_new_person_to_ilutzim(job='Samba', name=name)
+
+        # If the new person is a 'Toran', insert his name into
+        # the 'Toran' sheet and set his sum to the average of everybodies' sum
+        if toran_var.get() == 1:
+            workbook.remove(workbook['Toran'])
+            try:
+                sum_to_be_set = math.floor(toran_df['Sum'].mean())
+            except:  # If this is the first person in the sheet
+                sum_to_be_set = 0
+            toran_df = toran_df.append({'Name': name, 'Sum': sum_to_be_set},
+                                           ignore_index=True)
+            # Write dataframe to the worksheet.
+            toran_df.to_excel(writer, sheet_name='Toran')
+
+            # add_new_person_to_ilutzim('Toran', name)
+            add_new_person_to_ilutzim(job='Toran', name=name)
+
+
+        # If the new person is a 'Driver', insert his name into
+        # the 'Driver' sheet and set his sum to the average of everybodies' sum
+        if driver_var.get() == 1:
+            workbook.remove(workbook['Driver'])
+            try:
+                sum_to_be_set = math.floor(samba_df['Sum'].mean())
+            except:  # If this is the first person in the sheet
+                sum_to_be_set = 0
+            driver_df = driver_df.append({'Name': name, 'Sum': sum_to_be_set},
+                                           ignore_index=True)
+            # Write dataframe to the worksheet.
+            driver_df.to_excel(writer, sheet_name='Driver')
+
+            # add_new_person_to_ilutzim('Manager', name)
+            add_new_person_to_ilutzim(job='Driver', name=name)
+
+
 
         # Save the justice board file
         writer.save()
@@ -394,6 +436,8 @@ def add_new_person_to_ilutzim(job, name):
     makel_operator_df_ilutzim = dict_of_df['Makel Operator']
     manager_df_ilutzim = dict_of_df['Manager']
     samba_df_ilutzim = dict_of_df['Samba']
+    toran_df_ilutzim = dict_of_df['Toran']
+    driver_df_ilutzim = dict_of_df['Driver']
 
 
     with pd.ExcelWriter('ilutzim.xlsx', engine='openpyxl', mode='a') \
@@ -423,6 +467,24 @@ def add_new_person_to_ilutzim(job, name):
                                                     'Wednesday': '0'},
                                                    ignore_index=True)
         dict_of_df['Samba'] = samba_df_ilutzim
+
+    if job == 'Toran':
+        toran_df_ilutzim = toran_df_ilutzim.append({'Name': name,
+                                                    'Sunday': '0',
+                                                    'Monday': '0',
+                                                    'Tuesday': '0',
+                                                    'Wednesday': '0'},
+                                                   ignore_index=True)
+        dict_of_df['Toran'] = toran_df_ilutzim
+
+    if job == 'Driver':
+        driver_df_ilutzim = driver_df_ilutzim.append({'Name': name,
+                                                    'Sunday': '0',
+                                                    'Monday': '0',
+                                                    'Tuesday': '0',
+                                                    'Wednesday': '0'},
+                                                   ignore_index=True)
+        dict_of_df['Driver'] = driver_df_ilutzim
 
     workbook.remove(workbook[job])
     dict_of_df[job].to_excel(writer, sheet_name=job)
@@ -459,7 +521,9 @@ def get_list_of_all_people():
     list_of_all_df = [dict_of_df['Makel Officer'],
                       dict_of_df['Makel Operator'],
                       dict_of_df['Manager'],
-                      dict_of_df['Samba']]
+                      dict_of_df['Samba'],
+                      dict_of_df['Toran'],
+                      dict_of_df['Driver']]
     names_of_all_people = []
     for df in list_of_all_df:
         names_of_all_people += df['Name'].values.tolist()
@@ -545,7 +609,7 @@ def delete_person_from_ilutzim(name_of_person):
 
     # Run over each DF and delete the person from it if the person is
     # in it and update the sheet
-    for key in ['Samba', 'Manager']:
+    for key in ['Samba', 'Manager', 'Driver', 'Toran']:
         df = dict_of_df[key]
         if name_of_person in df['Name'].values:
             index_of_name_to_remove = df[
@@ -1023,8 +1087,6 @@ def insert_sum_to_justice_board(tzevet_conan_df):
         workbook.remove(workbook[sheet])
         dict_of_updated_df[sheet].to_excel(writer, sheet_name=sheet)
         writer.save()
-
-
 
 
 

@@ -327,14 +327,13 @@ def generate_managers():
     # Insert into the tzevet conan file the generated managers
     tzevet_conan.loc['Manager'] = managers_conanim_df.loc['Manager']
 
-# (4) Generate Fast caller + Toran ---------------------------------------------
+# (4) Generate Toran ---------------------------------------------
 
 def generate_toranim():
     print('-------------------------------')
     print('toranim')
     print(tzevet_conan)
-    toranim_conanim_df = tzevet_conan.loc[['Fast caller',
-                                           'Toran',
+    toranim_conanim_df = tzevet_conan.loc[['Toran',
                                            'Operator 1',
                                            'Operator 2',
                                            'Operator 3',
@@ -357,7 +356,6 @@ def generate_toranim():
     tzevet_conan.loc['Fast caller'] = toranim_conanim_df.loc['Fast caller']
     tzevet_conan.loc['Toran'] = toranim_conanim_df.loc['Toran']
 
-
 # (5) Generate Samba -----------------------------------------------------------
 
 def generate_samba():
@@ -365,8 +363,6 @@ def generate_samba():
     print('samba')
     print(tzevet_conan)
     samba_conanim_df = tzevet_conan.loc[['Samba',
-                                         'Fast caller',
-                                         'Toran',
                                          'Operator 1']]
 
     # Makel operators' list of the names of the indexes
@@ -384,8 +380,12 @@ def generate_samba():
     # Insert into the tzevet conan file the generated samba
     tzevet_conan.loc['Samba'] = samba_conanim_df.loc['Samba']
 
+# (6) Generate Driver ----------------------------------------------------------
 
-# (5) Generate All -------------------------------------------------------------
+def generate_driver():
+    pass
+
+# (7) Generate All -------------------------------------------------------------
 
 def generate_all():
     generate_makel_officer()

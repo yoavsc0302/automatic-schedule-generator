@@ -247,7 +247,8 @@ class App:
         makel_officer_var = tk.IntVar()
         makel_operator_var = tk.IntVar()
         samba_var = tk.IntVar()
-        fast_and_toran_var = tk.IntVar()
+        toran_var = tk.IntVar()
+        driver_var = tk.IntVar()
 
         manager = tk.Checkbutton(edit_people_window, text="מנהל",
                                  variable=manager_var).grid(
@@ -262,10 +263,15 @@ class App:
         samba = tk.Checkbutton(edit_people_window, text="סמבצ",
                                variable=samba_var).grid(row=2, column=4,
                                                         sticky="e")
-        fast_caller_and_toran = tk.Checkbutton(edit_people_window,
-                                               text="ת. יחידתי + ק.מ",
-                                               variable=fast_and_toran_var) \
+        toran = tk.Checkbutton(edit_people_window,
+                                               text="תורן יחידתי",
+                                               variable=toran_var) \
             .grid(row=3, column=4, sticky="e")
+
+        driver = tk.Checkbutton(edit_people_window,
+                                text="נהג",
+                                variable=driver_var).grid(row=4, column=4,
+                                                          sticky="e")
 
         # list of people
         list_of_people = em.get_list_of_all_people()
@@ -295,7 +301,8 @@ class App:
                                                                  makel_officer_var,
                                                                  makel_operator_var,
                                                                  samba_var,
-                                                                 fast_and_toran_var,
+                                                                 toran_var,
+                                                                 driver_var,
                                                                  warning_label))
         add_person.grid(row=5, column=5, sticky="nsew")
 
