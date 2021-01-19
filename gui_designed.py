@@ -1,9 +1,11 @@
 import tkinter as tk
 import tkinter.font as tkFont
 import excel_modifications as em
+import gui_chose_and_create_files
 import pandas as pd
 import os
 import tzevet_backtracking as tb
+
 
 class App:
     def __init__(self, root):
@@ -187,7 +189,7 @@ class App:
 
 
     def view_generated_tzevet_conan(self):
-        file_path = "C:\\Users\\User\\Desktop\\Python\\Automatic schedule generator\\tzevet_conan.xlsx"
+        file_path = em.get_tzevet_conan_location()
         os.startfile(file_path)
 
 
@@ -322,71 +324,12 @@ class App:
         """
         Create a new window for changing ilutzim and justice board files locations'
         """
-
-        # Create a new windows and set size and title
-        change_file_loc_windows = tk.Toplevel(root)
-        change_file_loc_windows.title("משבץ צוות אוטומטי")
-        change_file_loc_windows.geometry("400x300")
-
-        # Divide the windows into 5x5 frames
-        for i in range(5):
-            change_file_loc_windows.columnconfigure(i, weight=1, minsize=20)
-            change_file_loc_windows.rowconfigure(i, weight=1, minsize=20)
-            for j in range(5):
-                frame = tk.Frame(
-                    master=change_file_loc_windows,
-                    relief=tk.RAISED,
-                    borderwidth=0,
-                )
-                frame.grid(row=i, column=j, sticky="nsew")
-
-        # Justice board headline
-        justice_board_headline = tk.Label(master=change_file_loc_windows,
-                                          text="לוח צדק")
-        justice_board_headline.grid(row=0, column=1, sticky="nsew")
-        justice_board_headline.config(font=("calibri", 12))
-
-        # Ilutzim headline
-        ilutzim_headline = tk.Label(master=change_file_loc_windows,
-                                    text="אילוצים")
-        ilutzim_headline.grid(row=0, column=3, sticky="nsew")
-        ilutzim_headline.config(font=("calibri", 12))
-
-        # Get the location of the justice board file
-        justice_board_file_loc = tk.Entry(change_file_loc_windows)
-        justice_board_file_loc.grid(row=1, column=1, sticky="ew")
-        justice_board_file_loc.insert(0, em.get_justice_board_location())
-
-        # Get the location of the ilutzim file
-        ilutzim_file_loc = tk.Entry(change_file_loc_windows)
-        ilutzim_file_loc.grid(row=1, column=3, sticky="ew")
-        ilutzim_file_loc.insert(0, em.get_ilutzim_location())
-
-        # Save files locations button
-        save_files_locations = tk.Button(change_file_loc_windows,
-                                         text="שמור מיקומים", bg="#ff677d",
-                                         command=lambda:
-                                         em.save_files_new_locations(
-                                             pd.read_csv('files_location.csv'),
-                                             ilutzim_file_loc,
-                                             justice_board_file_loc))
-        save_files_locations.grid(row=3, column=1, sticky="nsew")
-
+        chose_and_create_files_window = gui_chose_and_create_files.\
+            ChoseAndCreateFiles(tk.Toplevel(root))
 
 # ------------------------------------------------------------------------------
 
-    def save_files_new_locations(files_location_df, ilutzim_entry, justice_entry):
-        """
-        Saves the new files location of ilutzim and justice board
-        :param files_location_df: the df which contain the files locations
-        :param ilutzim_entry: The new ilutzim file location given by the user
-         through the entry
-        :param justice_entry: The new justice board location given by the user
-         through the entry
-        """
-        files_location_df.at[0, 'ilutzim'] = ilutzim_entry.get()
-        files_location_df.at[0, 'justice_board'] = justice_entry.get()
-        files_location_df.to_csv('files_location.csv', index=False)
+
 
 
 if __name__ == "__main__":

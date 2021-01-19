@@ -7,6 +7,8 @@ import xlsxwriter
 import pickle
 import math
 import tkinter as tk
+from tkinter import *
+from tkinter import filedialog
 
 # Show entire df when printed
 pd.set_option("display.max_rows", None, "display.max_columns", None)
@@ -81,6 +83,16 @@ def get_ilutzim_sheets_as_df():
             'Samba': ilutzim_samba_df,
             'Toran': ilutzim_toran_df,
             'Driver': ilutzim_driver_df}
+
+
+def get_tzevet_conan_location():
+    """
+    Get the ilutzim file location
+    :return: the ilutzim file location as a string
+    """
+    files_location_df = pd.read_csv('files_location.csv')
+    tzevet_conan_file = files_location_df['tzevet_conan'][0]
+    return tzevet_conan_file
 
 
 def get_ilutzim_location():
@@ -203,8 +215,9 @@ def create_file_location_csv():
     Create csv thats stores the ilutzim and the justice board files locations'
     """
     files_location_df = pd.DataFrame({'ilutzim': ['i location'],
-                                      'justice_board': ['jb location']})
-    files_location = files_location_df.to_csv('files_location.csv')
+                                      'justice_board': ['jb location'],
+                                      'tzevet_conan': ['t location']})
+    files_location_df.to_csv('files_location.csv')
 
 
 def create_tzevet_conan_excel():
@@ -491,26 +504,6 @@ def add_new_person_to_ilutzim(job, name):
     writer.save()
 
 
-def get_ilutzim_location():
-    """
-    Get the ilutzim file location
-    :return: the ilutzim file location as a string
-    """
-    files_location_df = pd.read_csv('files_location.csv')
-    ilutzim_file = files_location_df['ilutzim'][0]
-    return ilutzim_file
-
-
-def get_justice_board_location():
-    """
-    Get the justice board file location
-    :return: the justice board file location as a string
-    """
-    files_location_df = pd.read_csv('files_location.csv')
-    justice_board_file = files_location_df['justice_board'][0]
-    return justice_board_file
-
-
 def get_list_of_all_people():
     """
     Go over all sheets in the justice board file, grab all names and remove
@@ -711,71 +704,6 @@ def convert_ilutzim_format_to_conan_manager(name, ilutzim_df, df):
             df.at[name, (0, dict_days_convert[day])] = '0'
 
 
-def convert_ilutzim_format_to_conan_samba(name, ilutzim_df, df):
-    """
-    Read the ilutzim file and according to the data in the df, insert the
-    ilutzim entered by the people in the df into the:
-    'generating_samba_df' while converting days to tuples
-    :param name: the person to convert his ilutzim to the
-    'generating_samba_df'
-    :param ilutzim_df: the ilutzim df
-    :param df: the updated 'generating_samba_df'
-    """
-
-    # Dictionaries that will assist the function to convert days and team
-    # to numbers that will be set in the tuples
-    dict_days_convert = {'Sunday': 0, 'Monday': 1, 'Tuesday': 2, 'Wednesday': 3}
-    dict_samba_convert = {'Samba': 0}
-
-    # For each day, check that the person doesn't have an ilutz in the
-    # ilutzim file.
-    # If he has, in the 'generating_ilutzim_df' suiting tuples change
-    # the value to '1'. else, change it to '0'
-
-    for day in ['Sunday', 'Monday', 'Tuesday', 'Wednesday']:
-
-        # The value in the cell of the day
-        value_in_cell = ilutzim_df.loc[name][day]
-
-        # Check that the person has an ilutz of being a samba in that day
-        if (value_in_cell != '0') and (value_in_cell != 0):
-            df.at[name, (0, dict_days_convert[day])] = '1'
-
-        else:
-            df.at[name, (0, dict_days_convert[day])] = '0'
-
-
-def convert_ilutzim_format_to_conan_toranim(name, ilutzim_df, df):
-    """
-    Read the ilutzim file and according to the data in the df, insert the
-    ilutzim entered by the people in the df into the:
-    'generating_toranim_df' while converting days to tuples
-    :param name: the person to convert his ilutzim to the
-    'generating_toranim_df'
-    :param ilutzim_df: the ilutzim df
-    :param df: the updated 'generating_toranim_df'
-    """
-    dict_days_convert = {'Sunday': 0, 'Monday': 1, 'Tuesday': 2, 'Wednesday': 3}
-    dict_manager_convert = {'Manager': 0}
-
-    # For each day, check that the person doesn't have an ilutz in the
-    # ilutzim file.
-    # If he has, in the 'generating_managers_df' suiting tuples change
-    # the value to '1'. else, change it to '0'
-
-    for day in ['Sunday', 'Monday', 'Tuesday', 'Wednesday']:
-        for i in range(2):
-            # The value in the cell of the day
-            value_in_cell = ilutzim_df.loc[name][day]
-
-            # Check that the person has an ilutz of being a manager in that day
-            if (value_in_cell != '0') and (value_in_cell != 0):
-                df.at[name, (i, dict_days_convert[day])] = '1'
-
-            else:
-                df.at[name, (i, dict_days_convert[day])] = '0'
-
-
 def define_df_for_generating_makel(job):
     """
     Create a df that contains:
@@ -864,17 +792,13 @@ def define_df_for_generating_samba():
      do in the comming week according to the ilutzim file
     :return: generate_manager_df - the df explained above
     """
-    # Get the 'Manager' sheet from the ilutzim and the justice
+    # Get the 'Samba' sheet from the ilutzim and the justice
     # board files
     dict_ilutzim = get_ilutzim_sheets_as_df()
     dict_justice = get_justice_sheets_as_df()
-
     ilutzim_df = dict_ilutzim['Samba']
     ilutzim_df.set_index('Name', inplace=True, drop=True)
-
     justice_df = dict_justice['Samba']
-    samba_df = justice_df[justice_df['Samba']]
-    samba_df = samba_df[['Name', 'Sum']].reset_index(drop=True)
 
 
     # Create a list containing tuples of locations (0, 0), (1, 0)..
@@ -887,15 +811,15 @@ def define_df_for_generating_samba():
 
     # Concat the justice board df ['Name', 'Sum'] with the
     # locations df [(0, 0), (0, 1), (0, 2), (0, 3)]
-    generate_manager_df = pd.concat([samba_df, locations_df])
+    generate_samba_df = pd.concat([justice_df, locations_df])
 
-    generate_manager_df.set_index('Name', inplace=True, drop=True)
+    generate_samba_df.set_index('Name', inplace=True, drop=True)
 
     # Execute this function for each name in df
-    for name in generate_manager_df.index.values.tolist():
-        convert_ilutzim_format_to_conan_manager(name, ilutzim_df, generate_manager_df)
+    for name in generate_samba_df.index.values.tolist():
+        convert_ilutzim_format_to_conan_manager(name, ilutzim_df, generate_samba_df)
 
-    return generate_manager_df
+    return generate_samba_df
 
 
 def define_df_for_generating_toranim():
@@ -907,39 +831,73 @@ def define_df_for_generating_toranim():
      do in the comming week according to the ilutzim file
     :return: generate_toranim_df - the df explained above
     """
-    # Get the 'Samba' sheet from the ilutzim and the justice
+    # Get the 'Toran' sheet from the ilutzim and the justice
     # board files
     dict_ilutzim = get_ilutzim_sheets_as_df()
     dict_justice = get_justice_sheets_as_df()
-
-    ilutzim_df = dict_ilutzim['Samba']
+    ilutzim_df = dict_ilutzim['Toran']
     ilutzim_df.set_index('Name', inplace=True, drop=True)
-
-    justice_df = dict_justice['Samba']
-    only_toranim_df = justice_df[justice_df['Fast caller and Toran']]
-    only_toranim_df = only_toranim_df[['Name', 'Sum']].reset_index(drop=True)
+    justice_df = dict_justice['Toran']
 
 
     # Create a list containing tuples of locations (0, 0), (1, 0)..
     list_col = []
-    for i in range(2):
-        for j in range(4):
-            list_col.append((i, j))
+    for i in range(4):
+        list_col.append((0, i))
 
     # Create a df which it's columns are the location tuples
     locations_df = pd.DataFrame(columns=list_col)
 
     # Concat the justice board df ['Name', 'Sum'] with the
     # locations df [(0, 0), (0, 1), (0, 2), (0, 3)]
-    generate_toranim_df = pd.concat([only_toranim_df, locations_df])
+    generate_toranim_df = pd.concat([justice_df, locations_df])
 
     generate_toranim_df.set_index('Name', inplace=True, drop=True)
 
     # Execute this function for each name in df
     for name in generate_toranim_df.index.values.tolist():
-        convert_ilutzim_format_to_conan_toranim(name, ilutzim_df, generate_toranim_df)
+        convert_ilutzim_format_to_conan_manager(name, ilutzim_df, generate_toranim_df)
 
     return generate_toranim_df
+
+
+def define_df_for_generating_driver():
+    """
+    Create a df that contains:
+    - Name of toran / fast caller
+    - How many shifts he has done
+    - The combination of toran + day (toran, day), that the person can't
+     do in the comming week according to the ilutzim file
+    :return: generate_toranim_df - the df explained above
+    """
+    # Get the 'Toran' sheet from the ilutzim and the justice
+    # board files
+    dict_ilutzim = get_ilutzim_sheets_as_df()
+    dict_justice = get_justice_sheets_as_df()
+    ilutzim_df = dict_ilutzim['Driver']
+    ilutzim_df.set_index('Name', inplace=True, drop=True)
+    justice_df = dict_justice['Driver']
+
+
+    # Create a list containing tuples of locations (0, 0), (1, 0)..
+    list_col = []
+    for i in range(4):
+        list_col.append((0, i))
+
+    # Create a df which it's columns are the location tuples
+    locations_df = pd.DataFrame(columns=list_col)
+
+    # Concat the justice board df ['Name', 'Sum'] with the
+    # locations df [(0, 0), (0, 1), (0, 2), (0, 3)]
+    generate_driver_df = pd.concat([justice_df, locations_df])
+
+    generate_driver_df.set_index('Name', inplace=True, drop=True)
+
+    # Execute this function for each name in df
+    for name in generate_driver_df.index.values.tolist():
+        convert_ilutzim_format_to_conan_manager(name, ilutzim_df, generate_driver_df)
+
+    return generate_driver_df
 
 
 def arrange_df_by_availability_and_justice(df, pos):
@@ -991,7 +949,7 @@ def insert_sum_to_justice_board(tzevet_conan_df):
     of times that the person had a shift in this job
     :param tzevet_conan_df: the tzevet conan df that was generated
     """
-    dict_of_all_jobs = {'Manager': {}, 'Samba': {}, 'Fast caller': {},
+    dict_of_all_jobs = {'Manager': {}, 'Samba': {}, 'Driver': {},
                         'Toran': {},
                         'Officer 1': {}, 'Officer 2': {}, 'Officer 3': {},
                         'Officer 4': {},
@@ -1036,6 +994,8 @@ def insert_sum_to_justice_board(tzevet_conan_df):
     makel_operator_df_justice = dict_of_justice_dfs['Makel Operator']
     manager_df_justice = dict_of_justice_dfs['Manager']
     samba_df_justice = dict_of_justice_dfs['Samba']
+    toran_df_justice = dict_of_justice_dfs['Toran']
+    driver_df_justice = dict_of_justice_dfs['Driver']
 
     with pd.ExcelWriter('justice_board.xlsx', engine='openpyxl', mode='a') \
             as writer:
@@ -1054,9 +1014,20 @@ def insert_sum_to_justice_board(tzevet_conan_df):
                 index = manager_df_justice[manager_df_justice['Name'] == name]['Sum'].index[0]
                 manager_df_justice.at[index, 'Sum'] += sum_of_name
 
-            elif job in ['Samba', 'Fast caller', 'Toran']:
-                index = samba_df_justice[samba_df_justice['Name'] == name]['Sum'].index[0]
+            if job == 'Samba':
+                index = samba_df_justice[samba_df_justice['Name'] == name][
+                    'Sum'].index[0]
                 samba_df_justice.at[index, 'Sum'] += sum_of_name
+
+            if job == 'Driver':
+                index = driver_df_justice[driver_df_justice['Name'] == name][
+                    'Sum'].index[0]
+                driver_df_justice.at[index, 'Sum'] += sum_of_name
+
+            if job == 'Toran':
+                index = toran_df_justice[toran_df_justice['Name'] == name][
+                    'Sum'].index[0]
+                toran_df_justice.at[index, 'Sum'] += sum_of_name
 
             elif job in ['Officer 1', 'Officer 2']:
                 index = makel_officer_df_justice[makel_officer_df_justice['Name'] == name][job[-1]].index[0]
@@ -1081,13 +1052,36 @@ def insert_sum_to_justice_board(tzevet_conan_df):
     dict_of_updated_df = {'Manager': manager_df_justice,
                           'Samba': samba_df_justice,
                           'Makel Officer': makel_officer_df_justice,
-                          'Makel Operator': makel_operator_df_justice}
+                          'Makel Operator': makel_operator_df_justice,
+                          'Driver': driver_df_justice,
+                          'Toran': toran_df_justice}
 
-    for sheet in ['Manager', 'Samba', 'Makel Officer', 'Makel Operator']:
+    for sheet in ['Manager', 'Samba', 'Makel Officer', 'Makel Operator',
+                  'Driver', 'Toran']:
         workbook.remove(workbook[sheet])
         dict_of_updated_df[sheet].to_excel(writer, sheet_name=sheet)
         writer.save()
 
 
+def browse_file(location_in_data_base):
+    filename = filedialog.askopenfile(filetypes=(("All Files", "*.*"),))
+    return (location_in_data_base, filename)
 
 
+def save_files_new_locations(type_of_file, file_path):
+    """
+    Saves the new file location to the database
+    """
+
+    df = pd.read_csv('files_location.csv', index_col=0)
+
+    if type_of_file == 'justice_board':
+        df.at[0, 'justice_board'] = file_path
+
+    elif type_of_file == 'ilutzim':
+        df.at[0, 'ilutzim'] = file_path
+
+    elif type_of_file == 'tzevet_conan':
+        df.at[0, 'tzevet_conan'] = file_path
+
+    df.to_csv('files_location.csv')
